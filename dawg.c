@@ -374,20 +374,46 @@ dawgnode_hash(const DAWGNode* p) {
 }
 
 
-int
-DAWG_clear_aux(DAWGNode* node, const size_t depth, void* extra) {
+static void
+DAWG_clear_recurse(DAWGNode* node, DAWGNode** nodelist) {
+
+	// Traverse all child nodes
+	for (size_t i=0; i < node->n; i++) {
+		int done = 0;
+		DAWGNode *child = node->next[i].child;
+		// see if we've already freed this node
+		DAWGNode **p;
+		for (p=nodelist; *p!=0; p++)
+		if (*p == child) {
+			done = 1;
+			break;
+		}
+		// If not, add it to the list and recurse over it
+		if (!done) {
+			*p = child;
+			DAWG_clear_recurse(child, nodelist);
+		}
+	}
+
+	// free the node
 	if (node->next)
 		memfree(node->next);
 
 	memfree(node);
-	return 1;
 }
 
 
 static int
 DAWG_clear(DAWG* dawg) {
-	DAWG_traverse_DFS_once(dawg, DAWG_clear_aux, NULL);
+	// Delete all nodes
+	DAWGStatistics stats;
+	DAWG_get_stats(dawg, &stats);
+        DAWGNode **aux_nodelist = memcalloc(stats.nodes_count, sizeof(DAWGNode *));
+	if(dawg->q0)
+	  DAWG_clear_recurse(dawg->q0, aux_nodelist);
+	memfree(aux_nodelist);
 
+	// Clear the main structure
 	dawg->q0	= NULL;
 	dawg->count	= 0;
 	dawg->state	= EMPTY;
