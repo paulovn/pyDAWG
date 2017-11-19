@@ -25,8 +25,8 @@ dawgobj_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
 	DAWGclass	*dawg;
 
 	dawg = (DAWGclass*)PyObject_New(DAWGclass, &dawg_type);
-    if (UNLIKELY(dawg == NULL))
-        return NULL;
+	if (UNLIKELY(dawg == NULL))
+		return NULL;
 
 	DAWG_init(&dawg->dawg);
 	dawg->version		= 0;
@@ -63,9 +63,9 @@ dawgobj_del(PyObject* self) {
 }
 
 
-static PyObject*
+static STRING_RETURN_TYPE*
 get_string(PyObject* value, String* string) {
-	PyObject* obj;
+	STRING_RETURN_TYPE* obj;
 
 	obj = pymod_get_string(
 			value,
@@ -87,15 +87,14 @@ dawgmeth_add_word(PyObject* self, PyObject* value) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	String	word;
-	PyObject* tmp;
+	STRING_RETURN_TYPE* tmp;
 
 	tmp = get_string(value, &word);
 	if (tmp == NULL)
 		return NULL;
 
 	const int ret = DAWG_add_word(&dawg, word);
-	Py_DECREF(tmp);
-
+	STRING_FREE(tmp);
 	switch (ret) {
 		case 1:
 			obj->version += 1;
@@ -114,7 +113,7 @@ dawgmeth_add_word(PyObject* self, PyObject* value) {
 		case DAWG_WORD_LESS:
 			PyErr_SetString(
 				PyExc_ValueError,
-				"word is less then previosuly added, can't update DAWG"
+				"word is less than previosuly added, can't update DAWG"
 			);
 			return NULL;
 
@@ -139,14 +138,14 @@ dawgmeth_add_word_unchecked(PyObject* self, PyObject* value) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	String	word;
-	PyObject*	tmp;
+	STRING_RETURN_TYPE*	tmp;
 
 	tmp = get_string(value, &word);
 	if (tmp == NULL)
 		return NULL;
 
 	const int ret = DAWG_add_word_unchecked(&dawg, word);
-	Py_DECREF(tmp);
+	STRING_FREE(tmp);
 
 	switch (ret) {
 		case 1:
@@ -179,14 +178,14 @@ static int
 dawgmeth_contains(PyObject* self, PyObject* value) {
 #define dawg (((DAWGclass*)self)->dawg)
 	String	word;
-	PyObject*	obj;
+	STRING_RETURN_TYPE*	obj;
 
 	obj = get_string(value, &word);
 	if (obj == NULL)
 		return -1;
 
 	const int ret = DAWG_exists(&dawg, word.chars, word.length);
-	Py_DECREF(obj);
+	STRING_FREE(obj);
 	return ret;
 #undef dawg
 }
@@ -217,14 +216,14 @@ static PyObject*
 dawgmeth_match(PyObject* self, PyObject* value) {
 #define dawg (((DAWGclass*)self)->dawg)
 	String	word;
-	PyObject*	obj;
+	STRING_RETURN_TYPE*	obj;
 
 	obj = get_string(value, &word);
 	if (obj == NULL)
 		return NULL;
 
 	const int ret = DAWG_match(&dawg, word.chars, word.length);
-	Py_DECREF(obj);
+	STRING_FREE(obj);
 
 	if (ret)
 		Py_RETURN_TRUE;
@@ -263,15 +262,16 @@ dawgmeth_find_all(PyObject* self, PyObject* args) {
 	bool use_wildcard = false;
 	PatternMatchType matchtype = MATCH_AT_LEAST_PREFIX;
 
+	STRING_RETURN_TYPE *arg1_res = NULL;
+	STRING_RETURN_TYPE *arg2_res = NULL;
+
 	// arg 1: prefix/prefix pattern
 	if (args) 
 		arg1 = PyTuple_GetItem(args, 0);
-	else
-		arg1 = NULL;
 	
 	if (arg1) {
-		arg1 = pymod_get_string(arg1, &word, &wordlen);
-		if (arg1 == NULL)
+		arg1_res = pymod_get_string(arg1, &word, &wordlen);
+		if (arg1_res == NULL)
 			goto error;
 	}
 	else {
@@ -283,15 +283,13 @@ dawgmeth_find_all(PyObject* self, PyObject* args) {
 	// arg 2: wildcard
 	if (args)
 		arg2 = PyTuple_GetItem(args, 1);
-	else
-		arg2 = NULL;
 
 	if (arg2) {
 		DAWG_LETTER_TYPE* tmp;
 		ssize_t len;
 
-		arg2 = pymod_get_string(arg2, &tmp, &len);
-		if (arg2 == NULL)
+		arg2_res = pymod_get_string(arg2, &tmp, &len);
+		if (arg2_res == NULL)
 			goto error;
 		else {
 			if (len == 1) {
@@ -355,8 +353,10 @@ dawgmeth_find_all(PyObject* self, PyObject* args) {
 				matchtype
 			);
 
-	Py_XDECREF(arg1);
-	Py_XDECREF(arg2);
+	if(arg1_res)
+	  STRING_FREE(arg1_res);
+	if(arg2_res)
+	  STRING_FREE(arg2_res);
 
 	if (iter)
 		return (PyObject*)iter;
@@ -364,8 +364,10 @@ dawgmeth_find_all(PyObject* self, PyObject* args) {
 		return NULL;
 
 error:
-	Py_XDECREF(arg1);
-	Py_XDECREF(arg2);
+	if(arg1_res)
+	  STRING_FREE(arg1_res);
+	if(arg2_res)
+	  STRING_FREE(arg2_res);
 	return NULL;
 #undef dawg
 }
@@ -378,14 +380,14 @@ static PyObject*
 dawgmeth_longest_prefix(PyObject* self, PyObject* value) {
 #define dawg (((DAWGclass*)self)->dawg)
 	String	word;
-	PyObject*	obj;
+	STRING_RETURN_TYPE*	obj;
 
 	obj = get_string(value, &word);
 	if (obj == NULL)
 		return NULL;
 
 	const size_t len = DAWG_longest_prefix(&dawg, word.chars, word.length);
-	Py_DECREF(obj);
+	STRING_FREE(obj);
 
 	return Py_BuildValue("i", len);
 #undef dawg
@@ -815,7 +817,7 @@ dawgmeth_word2index(PyObject* self, PyObject* arg) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	String word;
-	PyObject* bytes;
+	STRING_RETURN_TYPE* bytes;
 
 	bytes = get_string(arg, &word);
 	if (bytes == NULL)
@@ -831,7 +833,7 @@ dawgmeth_word2index(PyObject* self, PyObject* arg) {
 							word.chars,
 							(size_t)word.length
 						);
-	Py_DECREF(bytes);
+	STRING_FREE(bytes);
 
 	switch (result) {
 		case DAWG_NOT_EXISTS:
