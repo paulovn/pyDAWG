@@ -17,7 +17,7 @@
 #include "DAWG_class.h"
 #include "DAWGIterator_class.h"
 
-// c libary inlined
+// c library inlined
 #include "dawgnode.c"
 #include "dawg.c"
 
@@ -68,9 +68,9 @@ PyInit_pydawg(void) {
 #undef constant
 
 #ifdef DAWG_PERFECT_HASHING
-	PyModule_AddIntConstant(module, "perfect_hasing", 1);
+	PyModule_AddIntConstant(module, "perfect_hashing", 1);
 #else
-	PyModule_AddIntConstant(module, "perfect_hasing", 0);
+	PyModule_AddIntConstant(module, "perfect_hashing", 0);
 #endif
 
 #ifdef DAWG_UNICODE
