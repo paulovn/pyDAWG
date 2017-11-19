@@ -36,6 +36,7 @@
 
 
 #define memalloc	PyMem_Malloc
+#define memcalloc	PyMem_Calloc
 #define memfree		PyMem_Free
 #define memrealloc	PyMem_Realloc
 
@@ -53,7 +54,6 @@
 #	define	UNUSED
 #endif
 
-#define DEBUG
 #ifdef DEBUG
 #	include <assert.h>
 #	define	ASSERT(expr)	do {if (!(expr)) {printf("%s:%s:%d - '%s' failed!\n", __FILE__, __FUNCTION__, __LINE__, #expr); abort();} }while(0)
