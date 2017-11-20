@@ -21,7 +21,8 @@ module = Extension(
 	sources = ['pydawg.c'],
 	define_macros = [
 		('DAWG_PERFECT_HASHING', ''),	# enable perfect hashing
-		('DAWG_UNICODE', ''),			# use unicode
+		('DAWG_UNICODE', ''),		# use unicode
+		('DEBUG', ''),			# insert assertions
 	],
 	depends = [
 		'DAWG_class.c', 'DAWG_class.h',
@@ -35,7 +36,7 @@ module = Extension(
 
 setup(
 	name                = 'pyDAWG',
-    version             = '1.0.0',
+    version             = '1.0.1',
 	ext_modules         = [module],
 
     description         = "Directed Acyclic Word Graph (DAWG) allows to store huge strings set in compacted form",
