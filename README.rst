@@ -125,8 +125,12 @@ Property
 	  but adding new words is not allowed (see ``close``/``freeze``).
 
 
-Basic mathods
+Basic methods
 ~~~~~~~~~~~~~
+
+``__init__(*args)``
+	The constructor accepts an optional argument: a binary dump of a DAWG
+	(obtained via ``bindump()``); it will load it into the created object.
 
 ``add_word(word) => bool``
 	Add word, returns True if word didn't exists in a set.
@@ -180,7 +184,7 @@ Basic mathods
 	Erase all words from set.
 
 ``close()`` or ``freeze()``
-	Don't allow to add any new words, ``state`` value become
+	Don't allow to add any new words, ``state`` value becomes
 	``pydawg.CLOSED``. Also free memory occupied by	a hash table
 	used to perform incremental algorithm (see also	``get_hash_stats()``).
 
@@ -197,11 +201,11 @@ iterator, a lazy version of ``words()`` method.
 Minimal perfect hashing
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Minimal `perfect hashing`__ (MPH) allows to find unique number
-representing any word from DAWG, and also find word with given number.
+Minimal `perfect hashing`__ (MPH) allows to find a unique number
+representing any word in the DAWG, and also to find the word with a given number.
 Numbers are in always in range 1 ... ``len(DAWG)``.
 
-Finally, this feature makes possible to perform fast lookups as
+Finally, this feature makes it possible to perform fast lookups as
 in a regular dictionary.
 
 Algorithm used for MPH is described in *Applications of Finite Automata
@@ -219,9 +223,9 @@ __ http://en.wikipedia.org/wiki/perfect%20hashing
 	Words numbering is done for the whole DAWG. If new words
 	are added with ``add_word`` or ``add_word_unchecked``,
 	then current numbering is lost and when method ``word2index``
-	or ``index2word`` is called, then DAWG is renumbered.
+	or ``index2word`` is called, then the DAWG is renumbered.
 	
-	Because of that frequent mixing these two groups of method
+	Because of that, frequent mixing of these two groups of methods
 	will degrade performance.
 
 
@@ -264,7 +268,7 @@ Other
 ~~~~~
 
 ``dump() => (set of nodes, set of edges)``
-	Returns sets describing DAWG, elements are tuples.
+	Returns two sets describing the DAWG, elements are tuples.
 	
 	Node tuple:
 
@@ -278,12 +282,12 @@ Other
 	* destination node id
 
 	Distribution contains program ``dump2dot.py`` that shows how to
-	convert output of this function to `graphviz`__ DOT language.
+	convert the output of this function to `graphviz`__ DOT language.
 
 	__ http://graphviz.org
 
 ``bindump() => bytes``
-	Returns binary DAWG data.
+	Returns a binary representation of the DAWG data.
 
 ``binload(bytes)``
 	Restore DAWG from binary data. Example::
@@ -300,7 +304,7 @@ Other
 
 ``get_stats() => dict``
 	Returns dictionary containing some statistics about
-	underlaying data structure:
+	the underlying data structure:
 
 	* ``words_count``	--- number of distinct words (same as ``len(dawg)``)
 	* ``longest_word``	--- length of the longest word
@@ -312,7 +316,7 @@ Other
 	  ``nodes_count * sizeof_node + edges_count * sizeof_edge``
 
 ``get_hash_stats() => dict``
-	Returns some statistics about hash table used by DAWG.
+	Returns some statistics about the hash table used by DAWG.
 
 	* ``table_size``   --- number of table's elements
 	* ``element_size`` --- size of single table item
