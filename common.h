@@ -36,9 +36,12 @@
 
 
 #define memalloc	PyMem_Malloc
-#define memcalloc	PyMem_Calloc
 #define memfree		PyMem_Free
 #define memrealloc	PyMem_Realloc
+#if PY_VERSION_HEX >=  0x03050000
+#define memcalloc	PyMem_Calloc
+#endif
+
 
 #ifdef __GNUC__
 #	define	LIKELY(x)	__builtin_expect(x, 1)
