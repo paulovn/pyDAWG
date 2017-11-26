@@ -242,7 +242,7 @@ class TestPickle(TestDAWGBase):
 
 class TestMPH(TestDAWGBase):
 	def test_word2index(self):
-		if pydawg.perfect_hasing:
+		if pydawg.perfect_hashing:
 			D = self.D
 			# empty
 			for word in self.words:
@@ -271,7 +271,7 @@ class TestMPH(TestDAWGBase):
 
 
 	def test_index2word(self):
-		if pydawg.perfect_hasing:
+		if pydawg.perfect_hashing:
 			D = self.D
 
 			for i in range(-50, 50):
