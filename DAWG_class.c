@@ -24,7 +24,7 @@ PyObject*
 dawgobj_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
 	DAWGclass	*dawg;
 
-	dawg = (DAWGclass*)PyObject_New(DAWGclass, &dawg_type);
+	dawg = (DAWGclass*) type->tp_alloc(type,0);
 	if (UNLIKELY(dawg == NULL))
 		return NULL;
 
@@ -34,23 +34,29 @@ dawgobj_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
 #ifdef DAWG_PERFECT_HASHING
 	dawg->mph_version	= -1;	// numbers are not valid
 #endif
+	return (PyObject*)dawg;
+}
+
+
+static int
+dawgobj_init(PyObject* self, PyObject* args, PyObject* kwargs) {
 
 	if (PyTuple_Check(args) and PyTuple_Size(args) > 0) {
 		if (PyTuple_Size(args) == 1) {
-			PyObject* ret = dawgmeth_binload((PyObject*)dawg, PyTuple_GET_ITEM(args, 0));
+			PyObject* ret = dawgmeth_binload(self, PyTuple_GET_ITEM(args, 0));
 			if (ret == NULL) {
-				Py_DECREF(dawg);
-				return NULL;
+				Py_DECREF(self);
+				return -1;
 			}
 		}
 		else {
 			PyErr_SetString(PyExc_ValueError, "constructor do not accept any arguments");
-			Py_DECREF(dawg);
-			return NULL;
+			Py_DECREF(self);
+			return -1;
 		}
 	}
 
-	return (PyObject*)dawg;
+	return 0;
 }
 
 
@@ -58,7 +64,7 @@ static void
 dawgobj_del(PyObject* self) {
 #define dawg (((DAWGclass*)self)->dawg)
 	DAWG_free(&dawg);
-	PyObject_Del(self);
+	Py_TYPE(self)->tp_free((PyObject*)self);
 #undef dawg
 }
 
@@ -130,8 +136,8 @@ dawgmeth_add_word(PyObject* self, PyObject* value) {
 
 #define dawgmeth_add_word_unchecked_doc \
 	"Does the same thing as ``add_word`` but do not check ``word`` "\
-	"order. Method should be used if one is sure, that input data " \
-	"satisfy	algorithm requirements, i.e. words order is valid." \
+	"order. Method should be used if one is sure that the input data " \
+	"satisfy the algorithm requirements, i.e. word order is valid." \
 
 static PyObject*
 dawgmeth_add_word_unchecked(PyObject* self, PyObject* value) {
@@ -436,7 +442,7 @@ dawgmeth_close(PyObject* self, PyObject* args) {
 
 
 #define dawgmeth_get_stats_doc \
-	"Returns dictionary containing some statistics about underlaying data structure:\n" \
+	"Returns a dictionary containing some statistics about the underlying data structure:\n" \
 	"* ``nodes_count``	--- number of nodes\n" \
 	"* ``edges_count``	--- number of edges\n" \
 	"* ``words_count``	--- number of distinct words (same as ``len(dawg)``)\n" \
@@ -548,7 +554,7 @@ dump_aux(DAWGNode* node, const size_t depth, void* extra) {
 
 
 #define dawgmeth_dump_doc \
-	"Returns  sets describing DAWG, elements are tuples." \
+	"Returns two sets describing the DAWG, elements are tuples." \
 	"Node tuple: unique id of node (number), end of word marker" \
 	"Edge tuple: source node id, edge label --- letter, destination node id"
 
@@ -622,7 +628,7 @@ words_aux(DAWGNode* node, const size_t depth, WordsAux* words) {
 
 
 #define dawgmeth_words_doc \
-	"Returns number of distinct words."
+	"Returns the list of distinct words."
 
 static PyObject*
 dawgmeth_words(PyObject* self, PyObject* args) {
@@ -706,7 +712,7 @@ dawgmeth_binload(PyObject* self, PyObject* arg) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	if (not PyBytes_Check(arg)) {
-		PyErr_SetString(PyExc_TypeError, "bytes object expected");
+		PyErr_SetString(PyExc_TypeError, "bytes object expected for binary load");
 		return NULL;
 	}
 
@@ -809,7 +815,7 @@ dawgmeth___reduce__(PyObject* self, PyObject* args) {
 
 #define dawgmeth_word2index_doc \
 	"word2index(word) => integer\n" \
-	"Returns unique integer in range 1..len() identifies a word." \
+	"Returns a unique integer in range 1..len() that identifies a word." \
 	"If word is not present in DAWG, returns None"
 
 static PyObject*
@@ -849,7 +855,7 @@ dawgmeth_word2index(PyObject* self, PyObject* arg) {
 
 #define dawgmeth_index2word_doc \
 	"index2word(integer) => string\n" \
-	"Returns word identified by given integer."
+	"Returns the word identified by the given integer."
 
 static PyObject*
 dawgmeth_index2word(PyObject* self, PyObject* arg) {
@@ -952,15 +958,15 @@ PyMethodDef dawg_methods[] = {
 static
 PyTypeObject dawg_type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"pydawg.DAWG",								/* tp_name */
-	sizeof(DAWGclass),							/* tp_size */
-	0,											/* tp_itemsize? */
-	(destructor)dawgobj_del,		       	  	/* tp_dealloc */
+	"pydawg.DAWG",					/* tp_name */
+	sizeof(DAWGclass),				/* tp_basicsize */
+	0,						/* tp_itemsize? */
+	(destructor)dawgobj_del,	       	  	/* tp_dealloc */
 	0,                                      	/* tp_print */
 	0,                                         	/* tp_getattr */
 	0,                                          /* tp_setattr */
 	0,                                          /* tp_reserved */
-	0,											/* tp_repr */
+	0,					    /* tp_repr */
 	0,                                          /* tp_as_number */
 	0,                                          /* tp_as_sequence */
 	0,                                          /* tp_as_mapping */
@@ -970,23 +976,23 @@ PyTypeObject dawg_type = {
 	PyObject_GenericGetAttr,                    /* tp_getattro */
 	0,                                          /* tp_setattro */
 	0,                                          /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,                         /* tp_flags */
-	0,                                          /* tp_doc */
+	Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,	    /* tp_flags */
+	"A DAWG data structure, which allows to store a set of strings and check\nthe existence of a string in linear time (in terms of string length)", /* tp_doc */
 	0,                                          /* tp_traverse */
 	0,                                          /* tp_clear */
 	0,                                          /* tp_richcompare */
 	0,                                          /* tp_weaklistoffset */
-	dawgmeth_iterator,							/* tp_iter */
+	dawgmeth_iterator,			    /* tp_iter */
 	0,                                          /* tp_iternext */
-	dawg_methods,								/* tp_methods */
-	dawg_members,								/* tp_members */
+	dawg_methods,				    /* tp_methods */
+	dawg_members,				    /* tp_members */
 	0,                                          /* tp_getset */
 	0,                                          /* tp_base */
 	0,                                          /* tp_dict */
 	0,                                          /* tp_descr_get */
 	0,                                          /* tp_descr_set */
 	0,                                          /* tp_dictoffset */
-	0,											/* tp_init */
+	dawgobj_init,				    /* tp_init */
 	0,                                          /* tp_alloc */
-	dawgobj_new,								/* tp_new */
+	dawgobj_new,				    /* tp_new */
 };

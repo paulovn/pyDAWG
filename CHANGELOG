@@ -1,3 +1,8 @@
+2017-11-26 - version 1.0.1
+    * bug fixes on memory management
+    * use of the new Unicode API for Python >= 3.3
+    * changes to make the DAWG object inheritable
+
 2011-04-10
     * introduced DAWG_UNICODE preprocessor definition, that allow
       to choose type of strings accepted by DAWG

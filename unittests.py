@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 import unittest
 import pydawg
 
@@ -59,7 +61,6 @@ class TestDAWG(TestDAWGBase):
 
 	def test_len(self):
 		D = self.add_test_words()
-
 		self.assertEqual(len(D), len(self.words))
 	
 	
@@ -124,6 +125,14 @@ class TestDAWG(TestDAWGBase):
 		I = map(conv, self.words)
 		L = D.words()
 		self.assertEqual(set(L), set(I))
+
+
+	def test_words_utf8(self):
+		words = u'dábale arroz a la zorra el abad'.split()
+		for word in sorted(words):
+			self.assertTrue(self.D.add_word(conv(word)))
+		L = self.D.words()
+		self.assertEqual(set(L), set(words))
 
 
 	def test_iter(self):
@@ -228,6 +237,21 @@ class TestDumpLoad(TestDAWGBase):
 		D.add_word(conv("zzza"))
 
 
+	def test_load_constructor(self):
+		D = self.add_test_words()
+		L = D.words()
+		Ls = D.get_stats()
+
+		dump = D.bindump()
+		D2 = pydawg.DAWG(dump)
+		N = D2.words()
+		Ns = D2.get_stats()
+		self.assertEqual(L, N)
+		self.assertEqual(Ls, Ns)
+
+		D2.add_word(conv("zip"))
+		D2.add_word(conv("zzza"))
+
 class TestPickle(TestDAWGBase):
 	def test_pickle_unpickle(self):
 		import pickle
@@ -298,6 +322,70 @@ class TestMPH(TestDAWGBase):
 			# test 2nd set, after adding a word
 			test([word])
 
+
+# ------------------------------------------------------------------------
+
+class DAWGSubclass1(pydawg.DAWG):
+
+	def total(self):
+		return len(self)
+
+	def keys(self):
+		return self.words()
+
+
+class DAWGSubclass2(pydawg.DAWG):
+
+	def __init__(self, param, *args):
+		import sys;print("[subinit1]", end='', file=sys.stderr)
+		self.param = param
+		super(DAWGSubclass2, self).__init__(*args)
+		import sys;print("[subinit2]", end='', file=sys.stderr)
+
+	def total(self):
+		return len(self)
+
+	def keys(self):
+		return self.words()
+
+
+class TestSubclass1(TestDAWGBase):
+
+	def setUp(self):
+		self.D = DAWGSubclass1()
+		self.words = "cat rat attribute tribute war warbute zaaa".split()
+		for w in sorted(self.words):
+			self.D.add_word(w)
+
+	def tearDown(self):
+		del self.D, self.words
+
+	def test1_subclass(self):
+		self.assertEqual(7, self.D.total())
+
+	def test2_subclass(self):
+		self.assertEqual(set(self.words), set(self.D.keys()))
+
+
+class TestSubclass2(TestDAWGBase):
+
+	def setUp(self):
+		self.D = DAWGSubclass2('value')
+		self.words = "cat rat attribute tribute war warbute zaaa".split()
+		for w in sorted(self.words):
+			self.D.add_word(w)
+
+	def tearDown(self):
+		del self.D, self.words
+
+	def test1_subclass(self):
+                self.assertEqual(7, self.D.total())
+
+	def test2_subclass(self):
+		self.assertEqual(set(self.words), set(self.D.keys()))
+
+	def test3_subclass(self):
+		self.assertEqual('value', self.D.param)
 
 if __name__ == '__main__':
 	unittest.main()
