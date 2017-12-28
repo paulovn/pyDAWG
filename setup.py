@@ -20,9 +20,9 @@ module = Extension(
 	'pydawg',
 	sources = ['pydawg.c'],
 	define_macros = [
+		('DEBUG', 1),                   # define debug mode
 		('DAWG_PERFECT_HASHING', ''),	# enable perfect hashing
 		('DAWG_UNICODE', ''),		# use unicode
-		('DEBUG', ''),			# insert assertions
 	],
 	depends = [
 		'DAWG_class.c', 'DAWG_class.h',

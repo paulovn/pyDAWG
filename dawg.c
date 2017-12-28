@@ -81,7 +81,7 @@ DAWG_add_word(DAWG* dawg, String word) {
 }
 
 
-static int ALWAYS_INLINE
+static int
 resize_hash(HashTable* hashtable) {
 	if (hashtable->count > hashtable->count_threshold)
 		return hashtable_resize(hashtable, hashtable->size * 2);
@@ -92,14 +92,15 @@ resize_hash(HashTable* hashtable) {
 
 int
 DAWG_add_word_unchecked(DAWG* dawg, String word) {
-	if (dawg->state == CLOSED)
+	if (dawg->state == CLOSED) {
 		return DAWG_FROZEN;
+    }
 
 	int ret = 1;
-	int i = 0;
+	size_t i = 0;
 
 	if (dawg->q0 == NULL) {
-		dawg->q0 = dawgnode_new(0);
+		dawg->q0 = dawgnode_new();
 		if (UNLIKELY(dawg->q0 == NULL))
 			return DAWG_NO_MEM;
 	}
@@ -120,7 +121,7 @@ DAWG_add_word_unchecked(DAWG* dawg, String word) {
 
 	// 3. add suffix
 	while (i < word.length) {
-		DAWGNode* new = dawgnode_new(word.chars[i]);
+		DAWGNode* new = dawgnode_new();
 		if (new == NULL)
 			return DAWG_NO_MEM;
 		
@@ -352,15 +353,15 @@ dawgnode_hash(const DAWGNode* p) {
 		FNV_step32(p->next[i].letter);
 #endif
 
-#if __SIZEOF_POINTER__ == 4
+#if defined(MACHINE32BIT)
 		const uint32_t ptr = (uint32_t)(p->next[i].child);
         FNV_step32(ptr);
-#elif __SIZEOF_POINTER__ == 8
+#elif defined(MACHINE64BIT)
         const uint64_t ptr = (uint64_t)(p->next[i].child);
         FNV_step32(ptr & 0xfffffffful);
         FNV_step32(ptr >> 32);
 #else
-#   error "Unsupported pointer size"
+#   error "Unsupported data size"
 #endif
 	}
 
@@ -378,7 +379,8 @@ static void
 DAWG_clear_recurse(DAWGNode* node, DAWGNode** nodelist) {
 
 	// Traverse all child nodes
-	for (size_t i=0; i < node->n; i++) {
+	size_t i;
+	for (i=0; i < node->n; i++) {
 		int done = 0;
 		DAWGNode *child = node->next[i].child;
 		// see if we've already freed this node
@@ -514,7 +516,7 @@ DAWG_traverse_DFS_once(DAWG* dawg, DAWG_traverse_callback callback, void* extra)
 
 
 int
-DAWG_get_stats_aux(DAWGNode* node, const size_t depth, void* extra) {
+DAWG_get_stats_aux(DAWGNode* node, UNUSED const size_t depth, UNUSED void* extra) {
 #define stats ((DAWGStatistics*)extra)
 	stats->nodes_count	+= 1;
 	stats->edges_count	+= node->n;
@@ -584,7 +586,7 @@ DAWG_exists(DAWG* dawg, const DAWG_LETTER_TYPE* word, const size_t wordlen) {
 }
 
 
-static bool PURE
+static size_t PURE
 DAWG_longest_prefix(DAWG* dawg, const DAWG_LETTER_TYPE* word, const size_t wordlen) {
 	return DAWG_find(dawg, word, wordlen, NULL);
 }

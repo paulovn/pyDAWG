@@ -16,7 +16,7 @@
 #define HASH_KEY_TYPE	DAWGNode*
 #define HASH_DATA_TYPE	uintptr_t
 #define HASH_EQ_FUN(a, b)	((a) == (b))
-#define HASH_GET_HASH(x)	(uintptr_t)(x)	// simple casting
+#define HASH_GET_HASH(x)	(HASH_TYPE)((uintptr_t)(x) & 0xffffffff)	// simple casting
 #define HASH_STATIC		static
 #define	HASH_ALLOC		memalloc
 #define HASH_FREE		memfree
@@ -36,12 +36,12 @@ typedef struct SaveAux {
 	int 	id;
 	size_t	size;
 	size_t	top;
-	void* 	array;
+	uint8_t* 	array;
 } SaveAux;
 
 
 static int
-save_fill_address_table(DAWGNode* node, const size_t depth, void* extra) {
+save_fill_address_table(DAWGNode* node, UNUSED const size_t depth, UNUSED void* extra) {
 #define self ((SaveAux*)extra)
 #define hashtable (self->LUT)
 	if (hashtable.count > hashtable.count_threshold) {
@@ -63,9 +63,9 @@ save_fill_address_table(DAWGNode* node, const size_t depth, void* extra) {
 
 	- magick		: 4 bytes
 	- state			: 1 byte
-	- nodes count	: 4 bytes
-	- words count	: 4 bytes
-	- longest word	: 4 bytes
+	- nodes count	: 8 bytes
+	- words count	: 8 bytes
+	- longest word	: 8 bytes
 	- id of root node	: 4 or 8 bytes
 
 	Format of node:
@@ -84,7 +84,7 @@ save_fill_address_table(DAWGNode* node, const size_t depth, void* extra) {
 #	define DUMP_ID_SIZE 8
 #endif
 
-#define DUMP_HEADER_SIZE (1 + 4*4 + DUMP_ID_SIZE)
+#define DUMP_HEADER_SIZE (1 + 4 + 3*8 + DUMP_ID_SIZE)
 #define DUMP_NODE_SIZE (DUMP_ID_SIZE + 1 + 4)
 #define DUMP_EDGE_SIZE (DAWG_LETTER_SIZE + DUMP_ID_SIZE)
 
@@ -104,7 +104,7 @@ save_fill_address_table(DAWGNode* node, const size_t depth, void* extra) {
 
 
 static int
-save_node(DAWGNode* node, const uint32_t node_id, void* array, addr_HashTable* addr) {
+save_node(DAWGNode* node, const nodeid_t node_id, uint8_t* array, addr_HashTable* addr) {
 	int saved = 0;
 	addr_HashListItem* item;
 	DAWGNode* child;
@@ -159,7 +159,7 @@ save_node(DAWGNode* node, const uint32_t node_id, void* array, addr_HashTable* a
 
 
 static int
-DAWG_save(DAWG* dawg, DAWGStatistics* stats, void** array, size_t* size) {
+DAWG_save(DAWG* dawg, DAWGStatistics* stats, uint8_t** array, size_t* size) {
 	ASSERT(dawg);
 	ASSERT(stats);
 
@@ -188,16 +188,14 @@ DAWG_save(DAWG* dawg, DAWGStatistics* stats, void** array, size_t* size) {
 	}
 
 	// save header
-#ifdef MACHINE64BIT
 #define save_8bytes(x) *(uint64_t*)(rec.array + rec.top) = (x); rec.top += 8;
-#endif
 #define save_4bytes(x) *(uint32_t*)(rec.array + rec.top) = (x); rec.top += 4;
 #define save_1byte(x) *(uint8_t*)(rec.array + rec.top) = (x); rec.top += 1;
 	save_4bytes(DUMP_MAGICK);
 	save_1byte(dawg->state);
-	save_4bytes(rec.LUT.count);	// nodes count
-	save_4bytes(dawg->count);
-	save_4bytes(dawg->longest_word);
+	save_8bytes(rec.LUT.count);	// nodes count
+	save_8bytes(dawg->count);
+	save_8bytes(dawg->longest_word);
 	if (dawg->state != EMPTY) {
 		addr_HashListItem* item;
 		item = addr_hashtable_get(&rec.LUT, dawg->q0);
@@ -215,6 +213,7 @@ DAWG_save(DAWG* dawg, DAWGStatistics* stats, void** array, size_t* size) {
 		save_8bytes(0);
 #endif
 	}
+#undef save_8bytes
 #undef save_4bytes
 #undef save_1byte
 
@@ -246,14 +245,14 @@ DAWG_save(DAWG* dawg, DAWGStatistics* stats, void** array, size_t* size) {
 
 
 static int
-load_node(void* array, DAWGNode** _node, DAWGNode** id2node) {
+load_node(uint8_t* array, DAWGNode** _node, DAWGNode** id2node) {
 	int loaded = 0;
 	DAWGNode* node = memalloc(sizeof(DAWGNode));
 	if (node == NULL) {
 		return DAWG_NO_MEM;
 	}
 
-	// load id and save a in lookup table
+	// load id and save it in the lookup table
 #ifdef MACHINE32BIT
 	const uint32_t id = *(uint32_t*)(array + loaded);
 	loaded += 4;
@@ -312,17 +311,17 @@ load_node(void* array, DAWGNode** _node, DAWGNode** id2node) {
 
 
 int
-DAWG_load(DAWG* dawg, void* array, size_t size) {
+DAWG_load(DAWG* dawg, uint8_t* array, size_t size) {
 	int result;
 	size_t top = 0;
 	size_t i;
 
 	uint32_t	magick;
 	DAWGState	state;
-	uint32_t	nodes_count;
-	uint32_t	words_count;
-	uint32_t	longest_word;
-	uint32_t	root_id;
+	uint64_t	nodes_count;
+	uint64_t	words_count;
+	uint64_t	longest_word;
+	nodeid_t	root_id;
 
 	if (size < DUMP_HEADER_SIZE)
 		return DAWG_DUMP_TRUNCATED;
@@ -340,9 +339,9 @@ DAWG_load(DAWG* dawg, void* array, size_t size) {
 	if (state != EMPTY and state != ACTIVE and state != CLOSED)
 		return DAWG_DUMP_INVALID_STATE;
 
-	nodes_count		= get_4bytes;
-	words_count		= get_4bytes;
-	longest_word	= get_4bytes;
+	nodes_count		= get_8bytes;
+	words_count		= get_8bytes;
+	longest_word	= get_8bytes;
 #ifdef MACHINE32BIT
 	root_id			= get_4bytes;
 #else

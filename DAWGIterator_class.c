@@ -130,7 +130,7 @@ DAWGIterator_next(PyObject* self) {
 		if (item == NULL or item->node == NULL)
 			return NULL; /* Stop iteration */
 
-		const int index = item->depth;
+		const size_t index = item->depth;
 		if (iter->matchtype != MATCH_AT_LEAST_PREFIX and index > iter->pattern_length) {
 			continue;
 		}
@@ -206,7 +206,7 @@ DAWGIterator_next(PyObject* self) {
 #undef iter
 
 static PyTypeObject dawg_iterator_type = {
-	PyVarObject_HEAD_INIT(&PyType_Type, 0)
+	PY_OBJECT_HEAD_INIT
 	"DAWGIterator",								/* tp_name */
 	sizeof(DAWGIterator),						/* tp_size */
 	0,											/* tp_itemsize? */

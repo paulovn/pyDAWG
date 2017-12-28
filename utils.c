@@ -27,7 +27,7 @@
 
 /* returns bytes or unicode internal buffer */
 static STRING_RETURN_TYPE*
-pymod_get_string(PyObject* obj, DAWG_LETTER_TYPE** word, ssize_t* wordlen) {
+pymod_get_string(PyObject* obj, DAWG_LETTER_TYPE** word, size_t* wordlen) {
 #if (defined NEW_UNICODE_API && defined DAWG_UNICODE)
 	if (PyUnicode_READY(obj)) {
 		PyErr_SetString(PyExc_TypeError, "string expected");
@@ -40,7 +40,7 @@ pymod_get_string(PyObject* obj, DAWG_LETTER_TYPE** word, ssize_t* wordlen) {
 #elif defined DAWG_UNICODE
 	if (PyUnicode_Check(obj)) {
 		*word = (DAWG_LETTER_TYPE*)PyUnicode_AS_UNICODE(obj);
-		*wordlen = PyUnicode_GET_SIZE(obj);
+		*wordlen = (size_t)PyUnicode_GET_SIZE(obj);
 		Py_INCREF(obj);
 		return obj;
 	}
@@ -51,7 +51,7 @@ pymod_get_string(PyObject* obj, DAWG_LETTER_TYPE** word, ssize_t* wordlen) {
 #else
 	if (PyBytes_Check(obj)) {
 		*word = (uint8_t*)PyBytes_AS_STRING(obj);
-		*wordlen = PyBytes_GET_SIZE(obj);
+		*wordlen = (size_t)PyBytes_GET_SIZE(obj);
 		Py_INCREF(obj);
 		return obj;
 	}

@@ -21,13 +21,12 @@ dawgmeth_binload(PyObject* self, PyObject* arg);
 
 
 PyObject*
-dawgobj_new(PyTypeObject* type, PyObject* args, PyObject* kwargs) {
+dawgobj_new(UNUSED PyTypeObject* type, UNUSED PyObject* args, UNUSED PyObject* kwargs) {
 	DAWGclass	*dawg;
-
 	dawg = (DAWGclass*) type->tp_alloc(type,0);
-	if (UNLIKELY(dawg == NULL))
+	if (UNLIKELY(dawg == NULL)) {	  
 		return NULL;
-
+	}
 	DAWG_init(&dawg->dawg);
 	dawg->version		= 0;
 	dawg->stats_version	= -1;	// stats are not valid
@@ -262,7 +261,7 @@ dawgmeth_find_all(PyObject* self, PyObject* args) {
 	PyObject* arg2 = NULL;
 	PyObject* arg3 = NULL;
 	DAWG_LETTER_TYPE* word;
-	ssize_t wordlen;
+	size_t wordlen;
 
 	DAWG_LETTER_TYPE wildcard;
 	bool use_wildcard = false;
@@ -292,7 +291,7 @@ dawgmeth_find_all(PyObject* self, PyObject* args) {
 
 	if (arg2) {
 		DAWG_LETTER_TYPE* tmp;
-		ssize_t len;
+		size_t len;
 
 		arg2_res = pymod_get_string(arg2, &tmp, &len);
 		if (arg2_res == NULL)
@@ -412,7 +411,7 @@ dawgmeth_len(PyObject* self) {
 	"Erase all words from set."
 
 static PyObject*
-dawgmeth_clear(PyObject* self, PyObject* args) {
+dawgmeth_clear(PyObject* self, UNUSED PyObject* args) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	DAWG_clear(&dawg);
@@ -430,7 +429,7 @@ dawgmeth_clear(PyObject* self, PyObject* args) {
 
 
 static PyObject*
-dawgmeth_close(PyObject* self, PyObject* args) {
+dawgmeth_close(PyObject* self, UNUSED PyObject* args) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	DAWG_close(&dawg);
@@ -462,7 +461,7 @@ static void update_stats(DAWGclass *obj) {
 
 
 static PyObject*
-dawgmeth_get_stats(PyObject* self, PyObject* args) {
+dawgmeth_get_stats(PyObject* self, UNUSED PyObject* args) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	update_stats(obj);
@@ -490,7 +489,7 @@ dawgmeth_get_stats(PyObject* self, PyObject* args) {
 	"Returns dict containing some info about hash table used by DAWG"
 
 static PyObject*
-dawgmeth_get_hash_stats(PyObject* self, PyObject* args) {
+dawgmeth_get_hash_stats(PyObject* self, UNUSED PyObject* args) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	DAWGHashStatistics stats;
@@ -520,7 +519,7 @@ typedef struct DumpAux {
 
 
 static int
-dump_aux(DAWGNode* node, const size_t depth, void* extra) {
+dump_aux(DAWGNode* node, UNUSED const size_t depth, void* extra) {
 #define Dump ((DumpAux*)extra)
 	PyObject* tuple;
 	DAWGNode* child;
@@ -559,7 +558,7 @@ dump_aux(DAWGNode* node, const size_t depth, void* extra) {
 	"Edge tuple: source node id, edge label --- letter, destination node id"
 
 static PyObject*
-dawgmeth_dump(PyObject* self, PyObject* args) {
+dawgmeth_dump(PyObject* self, UNUSED PyObject* args) {
 #define dawg (((DAWGclass*)self)->dawg)
 	DumpAux dump;
 
@@ -631,7 +630,7 @@ words_aux(DAWGNode* node, const size_t depth, WordsAux* words) {
 	"Returns the list of distinct words."
 
 static PyObject*
-dawgmeth_words(PyObject* self, PyObject* args) {
+dawgmeth_words(PyObject* self, UNUSED PyObject* args) {
 #define dawg (((DAWGclass*)self)->dawg)
 	WordsAux words;
 
@@ -674,10 +673,10 @@ error:
 	"Returns binary image of DAWG"
 
 static PyObject*
-dawgmeth_bindump(PyObject* self, PyObject* args) {
+dawgmeth_bindump(PyObject* self, UNUSED PyObject* args) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
-	void* array;
+	uint8_t* array;
 	size_t size;
 
 	PyObject* res;
@@ -686,7 +685,7 @@ dawgmeth_bindump(PyObject* self, PyObject* args) {
 
 	switch (DAWG_save(&dawg, &obj->stats, &array, &size)) {
 		case DAWG_OK:
-			res = PyBytes_FromStringAndSize(array, size);
+			res = PyBytes_FromStringAndSize((char*)array, size);
 			memfree(array);
 			return res;
 
@@ -795,7 +794,7 @@ dawgmeth_binload(PyObject* self, PyObject* arg) {
 	"reduce protocol"
 
 static PyObject*
-dawgmeth___reduce__(PyObject* self, PyObject* args) {
+dawgmeth___reduce__(PyObject* self, UNUSED PyObject* args) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
 	// return pair: type, bytes
@@ -834,10 +833,10 @@ dawgmeth_word2index(PyObject* self, PyObject* arg) {
 		obj->mph_version = obj->version;
 	}
 
-	const int result = DAWG_mph_word2index(
+	const size_t result = DAWG_mph_word2index(
 							&dawg,
 							word.chars,
-							(size_t)word.length
+							word.length
 						);
 	STRING_FREE(bytes);
 
@@ -957,13 +956,13 @@ PyMethodDef dawg_methods[] = {
 
 static
 PyTypeObject dawg_type = {
-	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	"pydawg.DAWG",					/* tp_name */
-	sizeof(DAWGclass),				/* tp_basicsize */
-	0,						/* tp_itemsize? */
-	(destructor)dawgobj_del,	       	  	/* tp_dealloc */
-	0,                                      	/* tp_print */
-	0,                                         	/* tp_getattr */
+	PY_OBJECT_HEAD_INIT
+	"pydawg.DAWG",				    /* tp_name */
+	sizeof(DAWGclass),			    /* tp_basicsize */
+	0,					    /* tp_itemsize? */
+	(destructor)dawgobj_del,	       	    /* tp_dealloc */
+	0,                                          /* tp_print */
+	0,                                          /* tp_getattr */
 	0,                                          /* tp_setattr */
 	0,                                          /* tp_reserved */
 	0,					    /* tp_repr */
@@ -973,7 +972,7 @@ PyTypeObject dawg_type = {
 	0,                                          /* tp_hash */
 	0,                                          /* tp_call */
 	0,                                          /* tp_str */
-	PyObject_GenericGetAttr,                    /* tp_getattro */
+	0,                                          /* tp_getattro */
 	0,                                          /* tp_setattro */
 	0,                                          /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE,	    /* tp_flags */
