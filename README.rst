@@ -1,9 +1,10 @@
+This is a fork of the PyDAWG__ Python package, to try out changes and test bugfixes (bugfixes are contributed back to the original source). License is the same as the original package (3-clause BSD)
+
+__ https://github.com/WojciechMula/pyDAWG
+  
 ========================================================================
                                pyDAWG
 ========================================================================
-
-.. image:: https://travis-ci.org/WojciechMula/pyDAWG.svg?branch=master
-    :target: https://travis-ci.org/WojciechMula/pyDAWG
 
 .. contents::
 
