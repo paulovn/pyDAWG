@@ -35,7 +35,7 @@ pymod_get_string(PyObject* obj, DAWG_LETTER_TYPE** word, size_t* wordlen) {
 	}
 	//fprintf(stderr,"[KIND %d]",PyUnicode_KIND(obj));
 	//*wordlen = PyUnicode_GET_LENGTH(obj);
-	*word = (DAWG_LETTER_TYPE*)PyUnicode_AsWideCharString(obj, wordlen);
+	*word = (DAWG_LETTER_TYPE*)PyUnicode_AsWideCharString(obj, (ssize_t*)wordlen);
 	return *word;
 #elif defined DAWG_UNICODE
 	if (PyUnicode_Check(obj)) {
