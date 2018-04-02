@@ -536,13 +536,18 @@ dump_aux(DAWGNode* node, UNUSED const size_t depth, void* extra) {
 	}
 
 	// 1.
-	tuple = Py_BuildValue("ii", node, (int)(node->eow));
+	tuple = Py_BuildValue("ni", node, (int)(node->eow));
 	append_tuple(Dump->nodes)
 
 	// 2.
 	for (i=0; i < node->n; i++) {
 		child = node->next[i].child;
-		tuple = Py_BuildValue("ici", node, node->next[i].letter, child);
+#ifdef DAWG_UNICODE
+		Py_UNICODE buf[2] = { node->next[i].letter, 0 };
+		tuple = Py_BuildValue("nun", node, buf, child);
+#else
+		tuple = Py_BuildValue("ncn", node, node->next[i].letter, child);
+#endif
 		append_tuple(Dump->edges)
 	}
 
