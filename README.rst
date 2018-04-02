@@ -6,7 +6,6 @@ __ https://github.com/WojciechMula/pyDAWG
                                pyDAWG
 ========================================================================
 
-.. contents::
 
 Introduction
 ============

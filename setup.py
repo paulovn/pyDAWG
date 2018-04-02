@@ -7,11 +7,10 @@ def get_readme():
 
         marker1 = '.. image'
         marker2 = '.. contents'
-        
-        s = body.index(marker1)
-        e = body.index(marker2)
 
-        body = body[:s] + body[e:]
+        #s = body.index(marker1)
+        #e = body.index(marker2)
+        #body = body[:s] + body[e:]
 
         return body
 
