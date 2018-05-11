@@ -35,7 +35,7 @@ module = Extension(
 
 setup(
 	name                = 'pyDAWG',
-    version             = '1.2.0',
+    version             = '1.2.1',
 	ext_modules         = [module],
 
     description         = "Directed Acyclic Word Graph (DAWG) allows to store huge strings set in compacted form",

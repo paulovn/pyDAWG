@@ -1,10 +1,14 @@
+2018-05-11 - version 1.2.1
+    * merged latest version from upstream
+
 2018-03-19 - version 1.2.0
     * improved memory deallocation efficiency: first build the list of nodes using
        DAWG_traverse_DFS_once() then deallocate them
     * bugfix in dawg_mph.c: word2index() for a string that (a) is not a string
 	in the DAWG (b) is a prefix of an existing word and (c) contains a valid
 	word, should return None but returned the index of (c)
-    * fixes in Unicode conversion methods
+    * fixes in Python value conversion (integer types) esp. for the version
+	holding Unicode strings
 
 2017-11-26 - version 1.0.1
     * bug fixes on memory management

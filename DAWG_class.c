@@ -414,7 +414,11 @@ static PyObject*
 dawgmeth_clear(PyObject* self, UNUSED PyObject* args) {
 #define obj ((DAWGclass*)self)
 #define dawg (obj->dawg)
-	DAWG_clear(&dawg);
+	int result = DAWG_clear(&dawg);
+	if(result==DAWG_NO_MEM) {
+		PyErr_NoMemory();
+		return NULL;
+	}
 	obj->version += 1;
 	Py_RETURN_NONE;
 #undef dawg
@@ -536,7 +540,7 @@ dump_aux(DAWGNode* node, UNUSED const size_t depth, void* extra) {
 	}
 
 	// 1.
-	tuple = Py_BuildValue("ni", node, (int)(node->eow));
+	tuple = Py_BuildValue("Ki", node, (int)(node->eow));
 	append_tuple(Dump->nodes)
 
 	// 2.
@@ -544,9 +548,9 @@ dump_aux(DAWGNode* node, UNUSED const size_t depth, void* extra) {
 		child = node->next[i].child;
 #ifdef DAWG_UNICODE
 		Py_UNICODE buf[2] = { node->next[i].letter, 0 };
-		tuple = Py_BuildValue("nun", node, buf, child);
+		tuple = Py_BuildValue("KuK", node, buf, child);
 #else
-		tuple = Py_BuildValue("ncn", node, node->next[i].letter, child);
+		tuple = Py_BuildValue("KcK", node, node->next[i].letter, child);
 #endif
 		append_tuple(Dump->edges)
 	}
