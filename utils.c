@@ -29,7 +29,7 @@
 static STRING_RETURN_TYPE*
 pymod_get_string(PyObject* obj, DAWG_LETTER_TYPE** word, size_t* wordlen) {
 #if (defined NEW_UNICODE_API && defined DAWG_UNICODE)
-	if (PyUnicode_READY(obj)) {
+	if (!PyUnicode_Check(obj) || PyUnicode_READY(obj)) {
 		PyErr_SetString(PyExc_TypeError, "string expected");
 		return NULL;
 	}
