@@ -1,3 +1,7 @@
+2019-04-10 - version 1.2.2
+    * fix: check valid object in pymod_get_string() to avoid segmentation
+      fault on bogus parameters
+
 2018-05-11 - version 1.2.1
     * merged latest version from upstream
 
