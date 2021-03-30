@@ -332,7 +332,7 @@ dawgmeth_find_all(PyObject* self, PyObject* args) {
 				default:
 					PyErr_SetString(PyExc_ValueError,
 						"third argument have to be one of MATCH_EXACT_LENGTH, "
-						"MATCH_AT_LEAST_PREFIX, MATCH_AT_LEAST_PREFIX"
+						"MATCH_AT_LEAST_PREFIX, MATCH_AT_MOST_PREFIX"
 					);
 					goto error;
 			}

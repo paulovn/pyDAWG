@@ -1,3 +1,8 @@
+2020-10-13 - version 1.2.3
+    * fix: read README file in setup.py as UTF-8 to avoid installation error
+    * use setuptools instead of distutils, this enables building wheel
+    * default Python is 3.6
+
 2019-04-10 - version 1.2.2
     * fix: check valid object in pymod_get_string() to avoid segmentation
       fault on bogus parameters
