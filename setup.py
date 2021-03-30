@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import io
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 def get_readme():
     with io.open('README.rst', 'rt', encoding='utf-8') as f:
@@ -56,4 +56,5 @@ setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: Text Editors :: Text Processing",
     ],
+    install_requires=['setuptools']
 )

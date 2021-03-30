@@ -7,7 +7,7 @@ CFLAGS	:= -g -Wall -Wstrict-prototypes
 export CC
 export CFLAGS
 
-PYTHON := python3.5
+PYTHON ?= python3.6
 
 test: build
 	$(PYTHON) unittests.py
@@ -19,7 +19,7 @@ build:
 clean:
 	rm -f *.so
 
-sdist bdist:
+sdist bdist bdist_wheel:
 	$(PYTHON) setup.py $@
 
 
